@@ -1,0 +1,27 @@
+name: ZAP Scan
+on:
+  workflow_dispatch:
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ejecutar ZAP
+        run: |
+          mkdir -p zap-local/reports
+          chmod -R 777 zap-local
+          docker run --rm \
+            -e TARGET_URL=http://testphp.vulnweb.com \
+            -e REPORT_DIR=/zap/wrk/reports \
+            -v "$PWD/zap-local:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/automation/plan.yaml
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-reports
+          path: zap-local/reports/
