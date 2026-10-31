@@ -1,0 +1,53 @@
+# Plan de ZAP Automation Framework (sin Docker)
+# Las variables ${...} se leen del entorno (las define el script de ejecución).
+env:
+  contexts:
+    - name: objetivo
+      urls:
+        - ${TARGET_URL}
+      includePaths:
+        - ${TARGET_URL}.*
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 10
+
+  - type: spider
+    parameters:
+      context: objetivo
+      maxDuration: 3
+
+  - type: spiderAjax          # htmlunit no requiere instalar ningún navegador
+    parameters:
+      context: objetivo
+      maxDuration: 3
+      browserId: htmlunit
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan          # ATAQUES REALES: solo con autorización
+    parameters:
+      context: objetivo
+      maxRuleDurationInMins: 2
+      maxScanDurationInMins: 10
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: ${REPORT_DIR}
+      reportFile: zap-report
+    risks: [high, medium, low]
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ${REPORT_DIR}
+      reportFile: zap-report
+    risks: [high, medium, low]
